@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class PriceVIdBranch {
+public class VehiclePriceToBranchId {
 
     private Double price;
     private String vehicleId;

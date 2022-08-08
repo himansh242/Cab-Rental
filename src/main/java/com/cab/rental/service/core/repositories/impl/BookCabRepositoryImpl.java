@@ -4,7 +4,7 @@ import com.cab.rental.service.core.commands.RepositoryAccessCommands;
 import com.cab.rental.service.core.repositories.BookCabRepository;
 import com.cab.rental.service.core.storage.*;
 import com.cab.rental.service.models.book.BookCabResponse;
-import com.cab.rental.service.models.book.PriceVIdBranch;
+import com.cab.rental.service.models.book.VehiclePriceToBranchId;
 import com.cab.rental.service.models.vehicle.VehicleType;
 import io.appform.dropwizard.sharding.dao.LookupDao;
 import org.hibernate.criterion.DetachedCriteria;
@@ -12,9 +12,10 @@ import org.hibernate.criterion.Restrictions;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 
 @Singleton
 public class BookCabRepositoryImpl implements BookCabRepository {
@@ -45,30 +46,9 @@ public class BookCabRepositoryImpl implements BookCabRepository {
     private static final String PRICE_ID = "priceId";
     private static final String VEHICLE_ID = "vehicleId";
     @Override
-    public BookCabResponse bookCab(VehicleType vehicleType, String startTime, String endTime) throws Exception {
+    public BookCabResponse bookCab(VehicleType vehicleType, Long startTime, Long endTime, List<VehiclePriceToBranchId> vehicleIdAndPrice) throws Exception {
 
-
-        //Vehicle Table
-        DetachedCriteria detachedCriteriaForVehicle = DetachedCriteria.forClass(VehicleTable.class);
-
-        detachedCriteriaForVehicle.add(Restrictions.eq(VEHICLE_TYPE, vehicleType));
-
-        List<VehicleTable> vehicleTableList = vehicleTableLookupDao.scatterGather(detachedCriteriaForVehicle);
-
-        List<PriceVIdBranch> vehicleIdAndPrice = new ArrayList<>();
-
-        /*
-        for a particular VehicleId, get it's price.
-        */
-        for(VehicleTable vehicleTable: vehicleTableList) {
-            Optional<PriceTable> priceTable = priceTableLookupDao.get(vehicleTable.getPriceId());
-            priceTable.ifPresent(table -> vehicleIdAndPrice.add(new PriceVIdBranch(table.getPrice(), vehicleTable.getVehicleId(), table.getBranchId())));
-        }
-
-        vehicleIdAndPrice.sort(Comparator.comparing(PriceVIdBranch::getPrice));
-
-
-        for(PriceVIdBranch IdPriceBranch: vehicleIdAndPrice) {
+        for(VehiclePriceToBranchId IdPriceBranch: vehicleIdAndPrice) {
             var vehicleId = IdPriceBranch.getVehicleId();
             var branchId = IdPriceBranch.getBranchId();
 
@@ -76,10 +56,10 @@ public class BookCabRepositoryImpl implements BookCabRepository {
             detachedCriteriaForTimeSlot.add(Restrictions.eq(VEHICLE_ID, vehicleId));
             List<TimeSlotTable> timeSlotTableList = timeTableLookupDao.scatterGather(detachedCriteriaForTimeSlot);
             if(!timeSlotTableList.isEmpty()){
-                BookCabResponse bookCabResponse = checkIfEntryCanBeMadeAndReturn(timeSlotTableList, vehicleType, branchId, parseDate(startTime), parseDate(endTime));
+                BookCabResponse bookCabResponse = checkIfEntryCanBeMadeAndReturn(timeSlotTableList, vehicleType, branchId, startTime, endTime);
                 if(bookCabResponse.getVehicleId()!= null) return bookCabResponse;
             }
-             else return enterFreshEntryAndReturn(vehicleId, branchId, parseDate(startTime), parseDate(endTime));
+             else return enterFreshEntryAndReturn(vehicleId, branchId, startTime, endTime);
 
         }
 
@@ -89,13 +69,7 @@ public class BookCabRepositoryImpl implements BookCabRepository {
                 .build();
     }
 
-    private Long parseDate(String time) throws ParseException {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM-dd-yyyy hh:mm aa");
-        Date date = simpleDateFormat.parse(time);
-        return date.getTime();
-    }
-
-    private BookCabResponse enterFreshEntryAndReturn(String vehicleId, String branchId, Long startTime, Long endTime) throws Exception {
+     BookCabResponse enterFreshEntryAndReturn(String vehicleId, String branchId, Long startTime, Long endTime) throws Exception {
 
         TimeSlotTable timeSlotTable = TimeSlotTable.builder()
                 .Id((DataStore.slotId++).toString())
@@ -123,17 +97,12 @@ public class BookCabRepositoryImpl implements BookCabRepository {
                 .build();
     }
 
-    private BookCabResponse checkIfEntryCanBeMadeAndReturn(List<TimeSlotTable> timeTableList, VehicleType vehicleType, String branchId, Long startTime, Long endTime) throws Exception {
+    BookCabResponse checkIfEntryCanBeMadeAndReturn(List<TimeSlotTable> timeTableList, VehicleType vehicleType, String branchId, Long startTime, Long endTime) throws Exception {
 
         var vehicleId = timeTableList.get(0).getVehicleId();
         var branchTable = branchTableLookupDao.get(branchId);
         var branchName = "";
         if(branchTable.isPresent()) branchName = branchTable.get().getBranchName();
-
-//        DetachedCriteria detachedCriteriaForTime = DetachedCriteria.forClass(TimeSlotTable.class);
-//        detachedCriteriaForTime.add(Restrictions.eq(VEHICLE_ID, vehicleId));
-//
-//        List<TimeSlotTable> timeTableList = timeTableLookupDao.scatterGather(detachedCriteriaForTime);
 
         timeTableList.sort((Comparator.comparing(TimeSlotTable::getStartTime)));
 
