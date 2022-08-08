@@ -22,39 +22,10 @@ import java.util.List;
 public class AllocatePriceRepositoryImpl implements AllocatePriceRepository {
 
     LookupDao<PriceTable> priceTableLookupDao;
-    LookupDao<BranchTable> branchTableLookupDao;
     LookupDao<VehicleTable> vehicleTableLookupDao;
-    private static final String BRANCH_NAME = "branchName";
-    private static final String BRANCH_ID = "branchId";
-    private static final String VEHICLE_TYPE = "vehicleType";
 
     @Override
-    public AllocatePriceResponse allocatePrice(String branchName, VehicleType vehicleType, Double price) throws Exception {
-
-        DetachedCriteria detachedCriteriaForBranch = DetachedCriteria.forClass(BranchTable.class);
-        detachedCriteriaForBranch.add(Restrictions.eq(BRANCH_NAME, branchName));
-
-        List<BranchTable> branchTableList = branchTableLookupDao.scatterGather(detachedCriteriaForBranch);
-
-        if(branchTableList.isEmpty()) {
-            return AllocatePriceResponse.builder()
-                    .message("No branch present with name " + branchName)
-                    .build();
-        }
-
-        BranchTable queriedBranch = branchTableList.get(0);
-
-        DetachedCriteria detachedCriteriaForVehicle = DetachedCriteria.forClass(VehicleTable.class);
-
-        detachedCriteriaForVehicle.add(Restrictions.eq(VEHICLE_TYPE, vehicleType));
-        detachedCriteriaForVehicle.add(Restrictions.eq(BRANCH_ID, queriedBranch.getBranchId()));
-        List<VehicleTable> vehicleTableList = vehicleTableLookupDao.scatterGather(detachedCriteriaForVehicle);
-
-        if(vehicleTableList.isEmpty()) {
-            return AllocatePriceResponse.builder()
-                    .message("No vehicle of type " + vehicleType + " is present in branch " + branchName)
-                    .build();
-        }
+    public AllocatePriceResponse allocatePrice(String branchName, VehicleType vehicleType, Double price, BranchTable queriedBranch) throws Exception {
 
         PriceTable priceTable = PriceTable.builder()
                 .priceId(Joiner.on(".").join(queriedBranch.getBranchId(),vehicleType))

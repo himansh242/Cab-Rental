@@ -1,10 +1,9 @@
 package com.cab.rental.service.core.resource;
 
 import com.cab.rental.service.models.GenericResponse;
-import com.cab.rental.service.models.branch.BranchAdditionResponse;
+import com.cab.rental.service.models.branch.BranchResponse;
 import com.cab.rental.service.core.service.AddBranchService;
 import com.cab.rental.service.core.service.impl.AddBranchServiceImpl;
-import com.cab.rental.service.models.branch.GetBranchResponse;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -24,7 +23,7 @@ public class BranchResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("addBranch/{branchName}")
-    public GenericResponse<BranchAdditionResponse> addBranch(@PathParam("branchName") String branchName) throws Exception {
+    public GenericResponse<BranchResponse> addBranch(@PathParam("branchName") String branchName) throws Exception {
         return GenericResponse.ok(addBranchService.addBranch(branchName));
     }
 
@@ -32,7 +31,7 @@ public class BranchResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("getBranch/{branchName}")
-    public GenericResponse<GetBranchResponse> getBranch(@PathParam("branchName") String branchName) {
+    public GenericResponse<BranchResponse> getBranch(@PathParam("branchName") String branchName) {
         return GenericResponse.ok(addBranchService.getBranch(branchName));
     }
 }

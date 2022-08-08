@@ -1,11 +1,10 @@
 package com.cab.rental.service.core.service;
 
-import com.cab.rental.service.models.branch.BranchAdditionResponse;
-import com.cab.rental.service.models.branch.GetBranchResponse;
+import com.cab.rental.service.models.branch.BranchResponse;
 
 public interface AddBranchService {
-    BranchAdditionResponse addBranch(String branchName) throws Exception;
+    BranchResponse addBranch(String branchName) throws Exception;
 
-    GetBranchResponse getBranch(String branchName);
+    BranchResponse getBranch(String branchName);
 
 }

@@ -5,9 +5,9 @@ import lombok.Data;
 
 @Builder
 @Data
-public class BranchAdditionResponse {
+public class BranchResponse {
 
-    String id;
+    String branchId;
     String branchName;
-
+    String message;
 }

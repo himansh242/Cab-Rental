@@ -9,6 +9,6 @@ public class AddVehicleResponse {
 
     String vehicleId;
     VehicleType vehicleType;
-    String BranchName;
-    String Message;
+    String branchName;
+    String message;
 }
