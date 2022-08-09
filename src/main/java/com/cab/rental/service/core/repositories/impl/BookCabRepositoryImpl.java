@@ -4,6 +4,7 @@ import com.cab.rental.service.core.commands.RepositoryAccessCommands;
 import com.cab.rental.service.core.repositories.BookCabRepository;
 import com.cab.rental.service.core.storage.*;
 import com.cab.rental.service.models.book.BookCabResponse;
+import com.cab.rental.service.models.book.BookingStatus;
 import com.cab.rental.service.models.book.VehiclePriceToBranchId;
 import com.cab.rental.service.models.vehicle.VehicleType;
 import io.appform.dropwizard.sharding.dao.LookupDao;
@@ -12,10 +13,8 @@ import org.hibernate.criterion.Restrictions;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 @Singleton
 public class BookCabRepositoryImpl implements BookCabRepository {
@@ -69,7 +68,35 @@ public class BookCabRepositoryImpl implements BookCabRepository {
                 .build();
     }
 
-     BookCabResponse enterFreshEntryAndReturn(String vehicleId, String branchId, Long startTime, Long endTime) throws Exception {
+    @Override
+    public BookingStatus getBookingStatus(List<TimeSlotTable> timeSlotTableList, Long startTime, Long endTime) throws Exception {
+        var index = 0;
+
+        if (index == timeSlotTableList.size()) return BookingStatus.AVAILABLE;
+
+        while (index < timeSlotTableList.size() && timeSlotTableList.get(index).getStartTime() <= startTime){
+            index++;
+        }
+
+        if(index == timeSlotTableList.size()) {
+            if(startTime >= timeSlotTableList.get(index-1).getEndTime()) {
+                return BookingStatus.AVAILABLE;
+            }
+            else return BookingStatus.BOOKED;
+        }
+
+        if(index == 0) {
+            if(endTime <= timeSlotTableList.get(0).getStartTime()) {
+                return BookingStatus.AVAILABLE;
+            } else return BookingStatus.BOOKED;
+
+        }
+        if(startTime >= timeSlotTableList.get(index-1).getEndTime() && endTime <= timeSlotTableList.get(index).getEndTime()) {
+            return BookingStatus.AVAILABLE;
+        } else return BookingStatus.BOOKED;
+    }
+
+    BookCabResponse enterFreshEntryAndReturn(String vehicleId, String branchId, Long startTime, Long endTime) throws Exception {
 
         TimeSlotTable timeSlotTable = TimeSlotTable.builder()
                 .Id((DataStore.slotId++).toString())

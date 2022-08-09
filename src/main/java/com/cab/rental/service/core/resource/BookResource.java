@@ -3,6 +3,7 @@ package com.cab.rental.service.core.resource;
 import com.cab.rental.service.core.service.BookCabService;
 import com.cab.rental.service.models.GenericResponse;
 import com.cab.rental.service.models.book.BookCabResponse;
+import com.cab.rental.service.models.vehicle.GetAllCabs;
 import com.cab.rental.service.models.vehicle.VehicleType;
 
 import javax.inject.Inject;
@@ -29,5 +30,16 @@ public class BookResource {
             @PathParam("endTime") String endTime) throws Exception {
 
         return GenericResponse.ok(bookCabService.bookCab(vehicleType, startTime, endTime));
+    }
+
+    @GET
+    @Path("/getAllCabs/{startTime}/{endTime}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public GenericResponse<GetAllCabs> getAllCabs(
+            @PathParam("startTime") String startTime,
+            @PathParam("endTime") String endTime) throws Exception {
+
+        return GenericResponse.ok(bookCabService.getAllCabs(startTime, endTime));
     }
 }
